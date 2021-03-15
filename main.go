@@ -18,7 +18,8 @@ import (
 )
 
 var opts struct {
-	ClusterName string `long:"cluster-name" description:"Show cluster name in message (optional)"`
+	ClusterName   string `long:"cluster-name" description:"Show cluster name in message (optional)"`
+	FailedMessage string `long:"failed-message" description:"Custom failed message (optional)"`
 }
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 	}
 
 	clusterName := opts.ClusterName
+	failedMessage := opts.FailedMessage
 	pastJobs := make(map[string]bool)
 
 	client, err := k8s.NewClient()
@@ -60,7 +62,7 @@ func main() {
 					pastJobs[jobUniqueHash] = true
 				} else if job.Status.Failed > 0 {
 					if job.Status.StartTime.Add(5*time.Hour).Unix() > time.Now().Unix() {
-						err = slack.SendSlackMessage(message.JobFailure(clusterName, job.Name))
+						err = slack.SendSlackMessage(message.JobFailure(clusterName, job.Name, failedMessage))
 						if err != nil {
 							log.Fatalf("sending a message to slack failed %v", zap.Error(err))
 						}
